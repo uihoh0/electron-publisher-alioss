@@ -14,6 +14,15 @@ OR
     yarn add -D electron-pulisher-alioss
 ```
 
+Cause we can now only to pass the configuration to the publisher by using the "custome" provider,  so we need to create a electron-publisher-custome.js under the build-resource-folder(it should be build/ as default) , and export the alioss-publisher by ourself.
+
+```js
+    // build/electron-publisher-custome.js
+    const Publisher = require('electron-publisher-alioss')
+    module.exports = Publisher;
+```
+
+
 Next, set your publish providers as below
 ```jsonc
 //package.json
@@ -83,6 +92,9 @@ Next, set your publish providers as below
     "resumable": true
 }
 ```
+
+Basic setting is done.Enjoy the publish then.
+
 
 
 ### `path`
