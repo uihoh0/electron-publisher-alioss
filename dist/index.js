@@ -1,27 +1,52 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const ali_oss_1 = __importDefault(require("ali-oss"));
-const builder_util_1 = require("builder-util");
-const electron_publish_1 = require("electron-publish");
+import OSS from 'ali-oss'
+import { Packager } from 'app-builder-lib';
+import { Arch } from 'builder-util';
+import { HttpPublisher, PublishContext, UploadTask } from 'electron-publish';
 // import { createReadStream } from 'fs-extra-p';
-const path_1 = require("path");
-class AliOssPublisher extends electron_publish_1.HttpPublisher {
-    constructor(context, publishConfig, useSafeArtifactName) {
+import { basename, resolve } from 'path';
+
+
+interface AliOssPublishContext extends PublishContext {
+    readonly packager: Packager;
+}
+interface AliOssUploadTask extends UploadTask {
+    readonly packager: Packager;
+}
+interface AliOssPublisherConfig {
+    bucket: string;
+    region: string;
+    accessKeyId: string;
+    accessKeySecret: string;
+    resumable: boolean;
+    verbose: boolean;
+    maxResume: number;
+    localConfig: string;
+    path: string;
+}
+export default class AliOssPublisher extends HttpPublisher {
+    public readonly providerName = 'alioss';
+    protected useSafeName: boolean = true;
+    private readonly client: OSS
+    protected readonly context!: AliOssPublishContext;
+    protected config: AliOssPublisherConfig;
+
+    protected constructor(context: AliOssPublishContext, publishConfig: AliOssPublisherConfig, useSafeArtifactName?: boolean) {
         super(context);
-        this.providerName = 'alioss';
-        this.useSafeName = true;
         // const config = this.getConfig();
         this.useSafeName = useSafeArtifactName || true;
         let config = publishConfig;
         if (publishConfig.localConfig) {
-            const localConfig = require(path_1.resolve(this.context.packager.appDir, config.localConfig));
-            config = Object.assign({}, config, localConfig);
+            const localConfig = require(resolve(this.context.packager.appDir, config.localConfig));
+            config = {
+                ...config,
+                ...localConfig
+            }
         }
-        this.config = config;
-        this.client = new ali_oss_1.default({
+        this.config = {
+            resumable: true,
+            ...config
+        };
+        this.client = new OSS({
             region: config.region,
             //云账号AccessKey有所有API访问权限，建议遵循阿里云安全最佳实践，部署在服务端使用RAM子账号或STS，部署在客户端使用STS。
             accessKeyId: config.accessKeyId,
@@ -29,16 +54,17 @@ class AliOssPublisher extends electron_publish_1.HttpPublisher {
             bucket: config.bucket
         });
     }
-    async upload(task) {
-        const fileName = (this.useSafeName ? task.safeArtifactName : null) || path_1.basename(task.file);
+    public async upload(task: AliOssUploadTask): Promise<any> {
+        const fileName =
+            (this.useSafeName ? task.safeArtifactName : null) || basename(task.file);
         const os = task.packager['platform'].name;
-        await this.doUpload(fileName, task.file, task.arch || builder_util_1.Arch.x64, os);
+        await this.doUpload(fileName, task.file, task.arch || Arch.x64, os);
     }
-    async doUpload(fileName, filePath, arch, os) {
+    public async doUpload(fileName, filePath, arch, os) {
         const config = this.config;
         const appInfo = this.context.packager.appInfo;
-        const archName = builder_util_1.Arch[arch];
-        let uploadName = fileName;
+        const archName = Arch[arch];
+        let uploadName: string = fileName;
         if (config.path) {
             uploadName = config.path
                 .replace(/\${name}/g, appInfo.name)
@@ -49,36 +75,37 @@ class AliOssPublisher extends electron_publish_1.HttpPublisher {
         this.context.cancellationToken.createPromise(async (resolve, reject) => {
             const { resumable } = this.config;
             const maxResume = this.config.maxResume || 5;
+            let checkpoint;
             try {
-                console.log(`${uploadName}: uploading...🕑 `);
                 for (let i = 0; i < (resumable ? maxResume : 1); i++) {
-                    // try to resume the upload 5 times
-                    console.log(`${uploadName}: uploading...🕑 `);
+                    // try to resume the upload
+                    console.log(`${uploadName}: uploading...🕑 `)
                     const result = await this.client.multipartUpload(uploadName, filePath, {
-                        progress: async (percentage, checkpoint) => {
-                            this.checkpoint = checkpoint;
+                        progress: async (percentage, cpt) => {
+                            checkpoint = cpt;
+                            if (this.config.verbose && cpt) {
+                                console.log(`${uploadName}: ${cpt.doneParts.length}\/${Math.ceil(cpt.fileSize / cpt.partSize)}(${(percentage * 100).toFixed(2)}%)`)
+                            }
                         },
-                        checkpoint: this.checkpoint,
-                        meta: {}
+                        checkpoint: checkpoint,
+                        meta: {
+                        }
                     });
                     resolve(result);
-                    console.log(`${uploadName}: upload success...✅ `);
+                    console.log(`${uploadName}: upload success...✅ `)
                     break; // break if the upload success;
                 }
-            }
-            catch (e) {
+            } catch (e) {
                 // 捕获超时异常
                 if (e.code === 'ConnectionTimeoutError') {
                     console.error("Woops,Timeout!");
                     // do ConnectionTimeoutError operation
                 }
-                console.error(e);
+                console.error(e)
             }
         });
     }
-    toString() {
+    public toString() {
         return `${this.providerName}(${this.config.bucket})`;
     }
 }
-exports.default = AliOssPublisher;
-//# sourceMappingURL=index.js.map

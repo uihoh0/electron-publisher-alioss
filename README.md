@@ -95,7 +95,7 @@ Next, set your publish providers as below
 
 Basic setting is done.Enjoy the publish then.
 
-
+## `Configurations`
 
 ### `path`
 Type: `string`  
@@ -119,3 +119,8 @@ Default: `true`
 ### `maxResume`
 Type: `number`
 default: `5`
+
+
+### `verbose`
+Type: `boolean`  
+Default: `false`
