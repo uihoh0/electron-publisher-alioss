@@ -1,17 +1,18 @@
 import { Packager } from 'app-builder-lib';
 import { HttpPublisher, PublishContext, UploadTask } from 'electron-publish';
-interface INewPublishContext extends PublishContext {
+interface AliOssPublishContext extends PublishContext {
     readonly packager: Packager;
 }
-interface INewUploadTask extends UploadTask {
+interface AliOssUploadTask extends UploadTask {
     readonly packager: Packager;
 }
-interface IAliOssPublisherConfig {
+interface AliOssPublisherConfig {
     bucket: string;
     region: string;
     accessKeyId: string;
     accessKeySecret: string;
     resumable: boolean;
+    verbose: boolean;
     maxResume: number;
     localConfig: string;
     path: string;
@@ -20,11 +21,10 @@ export default class AliOssPublisher extends HttpPublisher {
     readonly providerName = "alioss";
     protected useSafeName: boolean;
     private readonly client;
-    protected readonly context: INewPublishContext;
-    protected config: IAliOssPublisherConfig;
-    private checkpoint;
-    protected constructor(context: INewPublishContext, publishConfig: IAliOssPublisherConfig, useSafeArtifactName?: boolean);
-    upload(task: INewUploadTask): Promise<any>;
+    protected readonly context: AliOssPublishContext;
+    protected config: AliOssPublisherConfig;
+    protected constructor(context: AliOssPublishContext, publishConfig: AliOssPublisherConfig, useSafeArtifactName?: boolean);
+    upload(task: AliOssUploadTask): Promise<any>;
     doUpload(fileName: any, filePath: any, arch: any, os: any): Promise<void>;
     toString(): string;
 }

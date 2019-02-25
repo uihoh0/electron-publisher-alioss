@@ -3,7 +3,7 @@ import { Packager } from 'app-builder-lib';
 import { Arch } from 'builder-util';
 import { HttpPublisher, PublishContext, UploadTask } from 'electron-publish';
 // import { createReadStream } from 'fs-extra-p';
-import { basename,resolve } from 'path';
+import { basename, resolve } from 'path';
 
 
 interface AliOssPublishContext extends PublishContext {
@@ -17,8 +17,9 @@ interface AliOssPublisherConfig {
     region: string;
     accessKeyId: string;
     accessKeySecret: string;
-    resumable: boolean; 
-    maxResume: number; 
+    resumable: boolean;
+    verbose: boolean;
+    maxResume: number;
     localConfig: string;
     path: string;
 }
@@ -28,8 +29,6 @@ export default class AliOssPublisher extends HttpPublisher {
     private readonly client: OSS
     protected readonly context!: AliOssPublishContext;
     protected config: AliOssPublisherConfig;
-
-    private checkpoint: any;
 
     protected constructor(context: AliOssPublishContext, publishConfig: AliOssPublisherConfig, useSafeArtifactName?: boolean) {
         super(context);
@@ -43,7 +42,10 @@ export default class AliOssPublisher extends HttpPublisher {
                 ...localConfig
             }
         }
-        this.config = config;
+        this.config = {
+            resumable: true,
+            ...config
+        };
         this.client = new OSS({
             region: config.region,
             //云账号AccessKey有所有API访问权限，建议遵循阿里云安全最佳实践，部署在服务端使用RAM子账号或STS，部署在客户端使用STS。
@@ -71,18 +73,21 @@ export default class AliOssPublisher extends HttpPublisher {
                 .replace(/\${filename}/g, fileName);
         }
         this.context.cancellationToken.createPromise(async (resolve, reject) => {
-            const {resumable} = this.config;
+            const { resumable } = this.config;
             const maxResume = this.config.maxResume || 5;
+            let checkpoint;
             try {
-                console.log(`${uploadName}: uploading...🕑 `)
                 for (let i = 0; i < (resumable ? maxResume : 1); i++) {
-                    // try to resume the upload 5 times
+                    // try to resume the upload
                     console.log(`${uploadName}: uploading...🕑 `)
                     const result = await this.client.multipartUpload(uploadName, filePath, {
-                        progress: async (percentage, checkpoint) => {
-                            this.checkpoint = checkpoint;
+                        progress: async (percentage, cpt) => {
+                            checkpoint = cpt;
+                            if (this.config.verbose && cpt) {
+                                console.log(`${uploadName}: ${cpt.doneParts.length}\/${Math.ceil(cpt.fileSize / cpt.partSize)}(${(percentage * 100).toFixed(2)}%)`)
+                            }
                         },
-                        checkpoint: this.checkpoint,
+                        checkpoint: checkpoint,
                         meta: {
                         }
                     });

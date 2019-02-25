@@ -4,7 +4,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "lint": "tslint src/**/*.ts"
+    "lint": "tslint src/**/*.ts",
+    "publish" : "npm run build && npm publish"
   },
   "dependencies": {
     "ali-oss": "^6.1.0",
