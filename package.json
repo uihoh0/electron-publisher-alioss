@@ -1,0 +1,24 @@
+{
+  "name": "electron-publisher-alioss",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint src/**/*.ts"
+  },
+  "dependencies": {
+    "ali-oss": "^6.1.0",
+    "app-builder-lib": "^20.38.5",
+    "builder-util": "^9.6.2",
+    "electron-publish": "^20.38.5",
+    "fs-extra-p": "^7.0.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.1.4"
+  },
+  "author": "uihoh0",
+  "license": "ISC",
+  "description": ""
+}
