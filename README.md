@@ -111,7 +111,11 @@ Example:
 /${name}/${os}/${arch}/${filename}
 ```
 
-
 ### `resumable`
 Type: `boolean`  
 Default: `true`
+
+
+### `maxResume`
+Type: `number`
+default: `5`
