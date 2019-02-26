@@ -59,7 +59,7 @@ export default class AliOssPublisher extends HttpPublisher {
             (this.useSafeName ? task.safeArtifactName : null) || basename(task.file);
         const os = task.packager['platform'].buildConfigurationKey || task.packager['platform'].name; 
         let archName = Arch[Arch.x64];
-        if(task.arch == null){
+        if(!task.arch && task.arch !== 0){
             if(task.packager['platform'].nodeName.indexOf('32') >= 0){
                 archName = Arch[Arch.ia32]
             }
