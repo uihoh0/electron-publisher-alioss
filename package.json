@@ -15,11 +15,12 @@
     "fs-extra-p": "^7.0.0",
     "path": "^0.12.7"
   },
+  "repository": "https://github.com/uihoh0/electron-publisher-alioss.git",
   "devDependencies": {
     "tslint": "^5.11.0",
     "typescript": "^3.1.4"
   },
-  "author": "uihoh0",
-  "license": "ISC",
+  "author": "uihoh0 <uihoh0@gmail.com>",
+  "license": "MIT",
   "description": ""
 }

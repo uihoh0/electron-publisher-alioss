@@ -57,13 +57,20 @@ export default class AliOssPublisher extends HttpPublisher {
     public async upload(task: AliOssUploadTask): Promise<any> {
         const fileName =
             (this.useSafeName ? task.safeArtifactName : null) || basename(task.file);
-        const os = task.packager['platform'].name;
-        await this.doUpload(fileName, task.file, task.arch || Arch.x64, os);
+        const os = task.packager['platform'].buildConfigurationKey || task.packager['platform'].name; 
+        let archName = Arch[Arch.x64];
+        if(task.arch == null){
+            if(task.packager['platform'].nodeName.indexOf('32') >= 0){
+                archName = Arch[Arch.ia32]
+            }
+        }else{
+            archName = Arch[task.arch]
+        }
+        await this.doUpload(fileName, task.file, archName, os);
     }
-    public async doUpload(fileName, filePath, arch, os) {
+    public async doUpload(fileName, filePath, archName, os) {
         const config = this.config;
         const appInfo = this.context.packager.appInfo;
-        const archName = Arch[arch];
         let uploadName: string = fileName;
         if (config.path) {
             uploadName = config.path
