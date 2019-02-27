@@ -14,10 +14,10 @@ OR
     yarn add -D electron-pulisher-alioss
 ```
 
-Cause we can now only to pass the configuration to the publisher by using the "custom" provider([ISSUE#3261: Allow pass configuration to custom electron-publisher provider](https://github.com/electron-userland/electron-builder/issues/3261)),  so we need to create a electron-publisher-custome.js under the build-resource-folder(it should be build/ as default) , and export the alioss-publisher by ourself.
+Cause we can now only to pass the configuration to the publisher by using the "custom" provider([ISSUE#3261: Allow pass configuration to custom electron-publisher provider](https://github.com/electron-userland/electron-builder/issues/3261)),  so we need to create a electron-publisher-custom.js under the build-resource-folder(it should be build/ as default) , and export the alioss-publisher by ourself.
 
 ```js
-    // build/electron-publisher-custome.js
+    // build/electron-publisher-custom.js
     const Publisher = require('electron-publisher-alioss')
     module.exports = Publisher;
 ```
